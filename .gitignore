@@ -1,0 +1,20 @@
+*.log
+logs/*
+
+docs/*
+
+# config.ini
+
+venv/
+.venv/
+.conda/
+
+__pycache__/
+*.pyc
+
+vector_store/*
+
+requirements.txt.lock
+
+*.bak
+*.swp
