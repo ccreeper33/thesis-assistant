@@ -9,6 +9,7 @@ import logging
 
 # 配置日志，将日志保存到文件
 logging.basicConfig(
+    level=logging.DEBUG, 
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler("logs/rag.log"),
@@ -20,23 +21,30 @@ logging.basicConfig(
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-# 从配置文件中获取向量存储路径
 vector_path = config.get('rag', 'vector_store_path')
+docs_path = config.get('rag', 'docs_path')
+embedding_model = config.get('rag', 'embedding_model')
+
+logging.info("loading embedding model")
+try:
+    embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+except Exception as e:
+    logging.error(f"Error loading embedding model: {e}")
+logging.info("embedding model loaded")
 
 def build_vector_store():
     try:
         docs = []
-        for file in os.listdir(config.get('rag', 'docs_path')):
+        for file in os.listdir(docs_path):
             if file.endswith(".pdf"):
-                loader = PyPDFLoader(os.path.join(config.get('paths', 'docs_path'), file))
+                loader = PyPDFLoader(os.path.join(docs_path, file))
                 docs.extend(loader.load())
         logging.info("Loaded all PDF documents")
 
-        splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+        splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
         texts = splitter.split_documents(docs)
         logging.info("Split documents into text chunks")
 
-        embeddings = HuggingFaceEmbeddings(model_name=config.get('llm', 'embedding_model'))
         db = FAISS.from_documents(texts, embeddings)
         db.save_local(vector_path)
         logging.info("Vector store built and saved.")
@@ -45,7 +53,6 @@ def build_vector_store():
 
 def load_vector_store():
     try:
-        embeddings = HuggingFaceEmbeddings(model_name=config.get('llm', 'embedding_model'))
         db = FAISS.load_local(vector_path, embeddings, allow_dangerous_deserialization=True)
         logging.info("Vector store loaded.")
         return db
