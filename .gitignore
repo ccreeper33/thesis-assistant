@@ -3,7 +3,7 @@ logs/*
 
 docs/*
 
-# config.ini
+config.ini
 
 venv/
 .venv/
@@ -13,6 +13,8 @@ __pycache__/
 *.pyc
 
 vector_store/*
+
+models/
 
 requirements.txt.lock
 
