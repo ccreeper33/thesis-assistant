@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import StreamingResponse
 from rag import build_prompt
-from client import send_chat_completion, get_model_list
+from client import send_chat_completion, get_model_list, stream_chat_completion
 import configparser
 import logging
 import uvicorn
@@ -35,23 +36,30 @@ app = FastAPI()
 async def chat(request: Request):
     try:
         data = await request.json()
-        user_model = data.get("model")
-        if not user_model:
-            return {"error": "必须提供 'model' 参数"}
+        user_message = data["messages"][-1]["content"]
+        model = data["model"]
+        temperature = float(data.get("temperature", 0.7))
+        stream = data.get("stream", False)
 
-        user_msg = data["messages"][-1]["content"]
-        user_prompt = build_prompt(user_msg)
-
-        prompt_msgs = [
+        user_prompt = build_prompt(user_message)
+        messages = [
             {"role": "system", "content": sys_prompt},
             {"role": "user", "content": user_prompt}
         ]
 
-        response = send_chat_completion(prompt_msgs, model=user_model, temperature=temperature)
-        return response
+        if stream:
+            async def event_generator():
+                async for chunk in stream_chat_completion(messages, model, temperature):
+                    yield chunk
+                yield "data: [DONE]\n\n"
+
+            return StreamingResponse(event_generator(), media_type="text/event-stream")
+        else:
+            return send_chat_completion(messages, model, temperature)
     except Exception as e:
-        logging.error(f"处理请求出错: {e}")
+        logging.error(f"Error processing request: {e}")
         return {"error": str(e)}
+    
 
 @app.get("/v1/models")
 def list_models():

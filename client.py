@@ -1,6 +1,8 @@
 import configparser
 import requests
 import logging
+import httpx
+import asyncio
 
 logging.basicConfig(level=logging.INFO)
 config = configparser.ConfigParser()
@@ -40,6 +42,34 @@ def get_model_list():
             logging.error(f"[{backend}] 获取模型列表失败: {e}")
     return models
 
+
+async def stream_chat_completion(messages, model: str, temperature=0.7):
+    if ':' not in model:
+        raise ValueError("模型名必须包含 backend 前缀，如 'openai:gpt-4'")
+
+    backend, real_model = model.split(":", 1)
+    if backend not in LLM_BACKENDS:
+        raise ValueError(f"未知模型后端 '{backend}'，请检查配置")
+
+    backend_info = LLM_BACKENDS[backend]
+    url = backend_info["api_url"]
+    headers = {"Accept": "text/event-stream"}
+    if backend_info.get("api_key"):
+        headers["Authorization"] = f"Bearer {backend_info['api_key']}"
+    
+    payload = {
+        "model": real_model,
+        "messages": messages,
+        "temperature": temperature,
+        "stream": True
+    }
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        async with client.stream("POST", url, headers=headers, json=payload) as response:
+            async for line in response.aiter_lines():
+                if line.startswith("data: "):
+                    yield line + "\n"
+                    
 
 def send_chat_completion(messages, model: str, temperature=0.7):
     try:
