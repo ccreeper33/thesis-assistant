@@ -4,7 +4,6 @@ from rag import build_prompt
 from client import send_chat_completion, get_model_list, stream_chat_completion
 import configparser
 import logging
-import uvicorn
 
 logging.basicConfig(
     level=logging.DEBUG,
