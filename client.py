@@ -2,7 +2,6 @@ import configparser
 import requests
 import logging
 import httpx
-import asyncio
 
 # 配置日志系统
 logging.basicConfig(
@@ -64,7 +63,7 @@ async def stream_chat_completion(messages, model: str, temperature=0.7):
     headers = {"Accept": "text/event-stream"}
     if backend_info.get("api_key"):
         headers["Authorization"] = f"Bearer {backend_info['api_key']}"
-    
+
     payload = {
         "model": real_model,
         "messages": messages,
@@ -77,7 +76,7 @@ async def stream_chat_completion(messages, model: str, temperature=0.7):
             async for line in response.aiter_lines():
                 if line.startswith("data: "):
                     yield line + "\n"
-                    
+
 
 def send_chat_completion(messages, model: str, temperature=0.7):
     try:
@@ -100,10 +99,10 @@ def send_chat_completion(messages, model: str, temperature=0.7):
         if backend_info.get("api_key"):
             headers["Authorization"] = f"Bearer {backend_info['api_key']}"
 
-        resp = requests.post(backend_info["api_url"], json=payload, headers=headers, timeout=20)
+        resp = requests.post(
+            backend_info["api_url"], json=payload, headers=headers, timeout=20)
         resp.raise_for_status()
         return resp.json()
     except Exception as e:
         logging.error(f"调用模型 {model} 失败: {e}")
         return {"error": str(e)}
-    

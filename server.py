@@ -31,6 +31,7 @@ except FileNotFoundError:
 
 app = FastAPI()
 
+
 @app.post("/v1/chat/completions")
 async def chat(request: Request):
     try:
@@ -58,7 +59,7 @@ async def chat(request: Request):
     except Exception as e:
         logging.error(f"Error processing request: {e}")
         return {"error": str(e)}
-    
+
 
 @app.get("/v1/models")
 def list_models():

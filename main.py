@@ -10,6 +10,7 @@ logging.basicConfig(level=logging.INFO)
 config = configparser.ConfigParser()
 config.read('config.ini')
 
+
 def start_server():
     """启动 FastAPI 服务"""
     host = config.get("api", "host")
@@ -21,6 +22,7 @@ def start_server():
         port=port,
         reload=True
     )
+
 
 def rebuild_vector_store():
     """清除已有向量库并重新构建"""
@@ -39,6 +41,7 @@ def rebuild_vector_store():
     from rag import build_vector_store
     build_vector_store()
 
+
 def clean_cache():
     """清理缓存文件"""
     cache_dir = "__pycache__"
@@ -55,6 +58,7 @@ def clean_cache():
         os.rmdir(log_dir)
         logging.info(f"已删除日志目录: {log_dir}")
 
+
 def show_help():
     print("""
 可用命令:
@@ -64,6 +68,7 @@ def show_help():
   rebuild         重建 RAG 向量库（清除旧库）
   help            显示帮助信息
     """)
+
 
 def main():
     parser = argparse.ArgumentParser(description="学术写作辅助系统 CLI")
@@ -88,6 +93,7 @@ def main():
     else:
         logging.error(f"未知命令: {command}")
         show_help()
+
 
 if __name__ == "__main__":
     main()

@@ -3,7 +3,6 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.docstore.in_memory import InMemoryDocstore
-from langchain.schema import Document
 import os
 import json
 import configparser
@@ -82,7 +81,8 @@ def build_vector_store():
                                     "source_type": "arxiv"
                                 })
                             except KeyError as ke:
-                                logging.error(f"metadata 缺少必要字段: {ke}，文件: {pdf_path}")
+                                logging.error(
+                                    f"metadata 缺少必要字段: {ke}，文件: {pdf_path}")
                         else:
                             doc.metadata["source_type"] = "guidebook"
 
@@ -95,13 +95,13 @@ def build_vector_store():
         logging.info(f"共加载了 {len(docs)} 个文档")
 
         splitter = RecursiveCharacterTextSplitter(
-            chunk_size=int(config.get('rag', 'chunk_size', fallback='500')), 
-            chunk_overlap=int(config.get('rag', 'chunk_overlap', fallback='100'))
-            )
+            chunk_size=int(config.get('rag', 'chunk_size', fallback='500')),
+            chunk_overlap=int(config.get(
+                'rag', 'chunk_overlap', fallback='100'))
+        )
         chunks = splitter.split_documents(docs)
 
         logging.info(f"准备构建向量库， chunk 数: {len(chunks)}")
-
 
         sample_embedding = embeddings.embed_query("test")
         dimension = len(sample_embedding)
@@ -145,7 +145,8 @@ def build_vector_store():
 
 def load_vector_store():
     try:
-        db = FAISS.load_local(vector_path, embeddings, allow_dangerous_deserialization=True)
+        db = FAISS.load_local(vector_path, embeddings,
+                              allow_dangerous_deserialization=True)
         logging.info("向量库加载成功。")
         return db
     except Exception as e:
