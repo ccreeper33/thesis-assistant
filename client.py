@@ -4,7 +4,15 @@ import logging
 import httpx
 import asyncio
 
-logging.basicConfig(level=logging.INFO)
+# 配置日志系统
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/client.log"),
+        logging.StreamHandler()
+    ]
+)
 config = configparser.ConfigParser()
 config.read('config.ini')
 
