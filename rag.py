@@ -10,14 +10,7 @@ import logging
 import faiss
 
 # 配置日志系统
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("logs/rag.log"),
-        logging.StreamHandler()
-    ]
-)
+logger = logging.getLogger(__name__)
 
 # 加载配置文件
 config = configparser.ConfigParser()
@@ -27,6 +20,7 @@ vector_path = config.get('rag', 'vector_store_path')
 docs_path = config.get('rag', 'docs_path')
 embedding_model = config.get('rag', 'embedding_model')
 
+# 加载嵌入模型
 logging.info("正在加载嵌入模型")
 try:
     embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
@@ -35,7 +29,9 @@ except Exception as e:
 
 
 def load_metadata(pdf_path):
-    """根据 PDF 文件路径加载同名 JSON 元数据文件"""
+    """
+    根据 PDF 文件路径加载同名 JSON 元数据文件
+    """
     base_name = os.path.splitext(os.path.basename(pdf_path))[0]
     json_path = os.path.join(os.path.dirname(pdf_path), f"{base_name}.json")
     if os.path.exists(json_path):
@@ -48,6 +44,9 @@ def load_metadata(pdf_path):
 
 
 def build_vector_store():
+    """
+    生成 RAG 文档向量库
+    """
     try:
         docs = []
 
@@ -137,13 +136,16 @@ def build_vector_store():
 
         # ✅ 保存向量库
         db.save_local(vector_path)
-        logging.info("向量库构建完成并已保存。")
+        logging.info("向量库构建完成并已保存")
 
     except Exception as e:
         logging.exception(f"构建向量库时发生未知错误: {e}")
 
 
 def load_vector_store():
+    """
+    加载向量库
+    """
     try:
         db = FAISS.load_local(vector_path, embeddings,
                               allow_dangerous_deserialization=True)
@@ -155,6 +157,9 @@ def load_vector_store():
 
 
 def retrieve_context(query, k=5):
+    """
+    从向量库中搜索最接近 query 的 k 个上下文片段
+    """
     db = load_vector_store()
     if not db:
         return []
@@ -173,6 +178,9 @@ def retrieve_context(query, k=5):
 
 
 def build_prompt(user_query):
+    """
+    将用户提示词与 RAG 检索到的上下文拼接
+    """
     results = retrieve_context(user_query)
     context_with_citations = []
 
