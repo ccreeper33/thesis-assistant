@@ -1,7 +1,5 @@
 # 📚 Thesis Assistant - LLM 辅助论文写作系统
 
-> **中文文档** | [English Version](README_en.md)
-
 本项目是一个基于大语言模型（LLM）与检索增强生成（RAG）技术的**学术论文辅助写作工具**。它支持从本地 arXiv 论文中提取信息，并结合 LLM 生成结构化内容、润色文本、引用标注等。
 
 ---
@@ -9,11 +7,10 @@
 ## 🧩 项目特点
 
 - ✅ 支持多模型后端（OpenAI、DeepSeek、阿里云通义千问、本地 vLLM 等）
-- ✅ 基于 FAISS 的 RAG 检索系统，支持 GPU 加速
+- ✅ 基于 FAISS 的 RAG 检索系统
 - ✅ 自动绑定 arXiv 论文 metadata，便于引用标注
 - ✅ 支持命令行操作：构建向量库、启动服务、清理缓存等
 - ✅ 提供统一 API 接口，兼容 OpenAI 标准格式
-- ✅ 可扩展性强，支持后续集成 BibTeX 导出、OCR 扫描件处理等功能
 
 ---
 
