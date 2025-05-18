@@ -21,11 +21,11 @@ for section in config.sections():
             "api_url": config.get(section, "api_url"),
             "api_key": config.get(section, "api_key", fallback=None)
         }
-        logging.info(
+        logger.info(
             f"已加载模型后端: {model_id} => {LLM_BACKENDS[model_id]['api_url']}")
 
 
-def get_model_list():
+async def get_model_list():
     """
     获取所有后端模型列表
     向每个已配置的 LLM 后端发送 /v1/models 请求，统一拼接前缀后返回
@@ -38,7 +38,7 @@ def get_model_list():
             if info.get("api_key"):
                 headers["Authorization"] = f"Bearer {info['api_key']}"
 
-            logging.info(f"[{backend}] 请求模型列表: {url}")
+            logger.info(f"[{backend}] 请求模型列表: {url}")
             resp = requests.get(url, headers=headers, timeout=10)
             resp.raise_for_status()
 
@@ -51,9 +51,9 @@ def get_model_list():
                     "created": m.get("created", 1680000000),
                     "owned_by": backend
                 })
-                logging.debug(f"已发现模型: {model_id}")
+                logger.debug(f"已发现模型: {model_id}")
         except Exception as e:
-            logging.error(f"[{backend}] 获取模型列表失败: {e}")
+            logger.error(f"[{backend}] 获取模型列表失败: {e}")
     return models
 
 
@@ -82,16 +82,24 @@ async def stream_chat_completion(messages, model: str, temperature=0.7):
         "stream": True
     }
 
-    logging.info(f"[{model}] 发起流式请求: {url}")
+    logger.info(f"[{model}] 发起流式请求: {url}")
+    logger.debug(f"请求信息:{messages}")
     async with httpx.AsyncClient(timeout=60) as client:
         async with client.stream("POST", url, headers=headers, json=payload) as response:
             async for line in response.aiter_lines():
-                if line.startswith("data: "):
-                    logging.debug(f"[{model}] 接收到流数据")
+                if not line.startswith("data: "):
+                    continue
+
+                if line.strip() == "data: [DONE]":
+                    logger.info(f"[{model}] 接收完成")
                     yield line + "\n"
+                    break
+
+                logger.debug(f"[{model}] 接收到流数据: {line}")
+                yield line + "\n"
 
 
-def send_chat_completion(messages, model: str, temperature=0.7):
+async def send_chat_completion(messages, model: str, temperature=0.7):
     """
     发送普通的非流式聊天请求，返回完整响应
     用于不支持 stream 的模型或需要一次性返回内容的请求场景
@@ -116,11 +124,11 @@ def send_chat_completion(messages, model: str, temperature=0.7):
         if backend_info.get("api_key"):
             headers["Authorization"] = f"Bearer {backend_info['api_key']}"
 
-        logging.info(f"[{model}] 发起非流式请求: {backend_info['api_url']}")
+        logger.info(f"[{model}] 发起非流式请求: {backend_info['api_url']}")
         resp = requests.post(
             backend_info["api_url"], json=payload, headers=headers, timeout=20)
         resp.raise_for_status()
         return resp.json()
     except Exception as e:
-        logging.error(f"调用模型 {model} 失败: {e}")
+        logger.error(f"调用模型 {model} 失败: {e}")
         return {"error": str(e)}
