@@ -95,7 +95,6 @@ async def stream_chat_completion(messages, model: str, temperature=0.7):
                     yield line + "\n"
                     break
 
-                logger.debug(f"[{model}] 接收到流数据: {line}")
                 yield line + "\n"
 
 
@@ -108,7 +107,7 @@ async def send_chat_completion(messages, model: str, temperature=0.7):
         if ':' not in model:
             raise ValueError("模型名必须包含 backend 前缀，如 'openai:gpt-4'")
 
-        backend, real_model = model.split(":", 1)
+        _, backend, real_model = model.split(":", 2)
         if backend not in LLM_BACKENDS:
             raise ValueError(f"未知模型后端 '{backend}'，请检查配置")
 

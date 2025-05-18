@@ -39,7 +39,7 @@ def start_server():
         "server:app",
         host=host,
         port=port,
-        reload=True
+        log_config=None
     )
 
 

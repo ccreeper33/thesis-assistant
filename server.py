@@ -47,7 +47,7 @@ async def chat(request: Request):
         logger.debug(f"用户消息: {user_message}")
 
         # 构造提示词
-        user_prompt = build_prompt(user_message)
+        user_prompt = await build_prompt(user_message)
         messages = [
             {"role": "system", "content": sys_prompt},
             {"role": "user", "content": user_prompt}
@@ -64,7 +64,7 @@ async def chat(request: Request):
 
         # 非流式响应模式
         else:
-            return send_chat_completion(messages, model, temperature)
+            return await send_chat_completion(messages, model, temperature)
 
     except Exception as e:
         logger.error(f"处理请求时出错: {e}")
@@ -72,12 +72,12 @@ async def chat(request: Request):
 
 
 @app.get("/v1/models")
-def list_models():
+async def list_models():
     """
     获取所有模型列表
     """
     logger.info("收到模型列表请求")
     return {
         "object": "list",
-        "data": get_model_list()
+        "data": await get_model_list()
     }
